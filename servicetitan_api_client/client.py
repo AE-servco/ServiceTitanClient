@@ -498,3 +498,171 @@ class ServiceTitanClient:
         # Join segments into a path and delegate to _prepare_url
         path = "/".join(segments)
         return self._prepare_url(path)
+    
+    # ------------------------------------------------------------------
+    # Date and time helpers
+    # ------------------------------------------------------------------
+    def _get_user_zone(self) -> "ZoneInfo":
+        """Return the configured local time zone as a :class:`~zoneinfo.ZoneInfo`.
+
+        ServiceTitan expects all timestamps in UTC; however, your
+        application likely works in a local time zone (defaulting to
+        Australia/Sydney).  This helper resolves the local time zone
+        name provided at construction into a ``ZoneInfo`` instance.
+        The resulting zone object is cached so that subsequent
+        conversions are inexpensive.
+
+        If the standard ``zoneinfo`` module is not available (on
+        Python 3.8 or earlier), it attempts to import
+        ``backports.zoneinfo``.  If both imports fail, an
+        ``ImportError`` is raised.
+        """
+        try:
+            from zoneinfo import ZoneInfo  # type: ignore
+        except ImportError:
+            try:
+                from backports.zoneinfo import ZoneInfo  # type: ignore
+            except ImportError:
+                raise ImportError(
+                    "Timezone conversion requires Python 3.9+ or the backports.zoneinfo package"
+                )
+        # Cache the zoneinfo object to avoid recreating it.  Use
+        # the configured local timezone string from ``self.local_timezone``.
+        if not hasattr(self, "_user_zone"):
+            setattr(self, "_user_zone", ZoneInfo(self.local_timezone))
+        return getattr(self, "_user_zone")
+
+    def to_utc(self, dt: "datetime") -> "datetime":
+        """Convert a naive or timezone‑aware datetime to UTC.
+
+        If ``dt`` is naive (has no ``tzinfo``), it is assumed to be in
+        the client's configured local time zone.  The returned
+        datetime will be timezone‑aware in UTC.
+
+        Parameters
+        ----------
+        dt : datetime
+            The datetime to convert.  Naive datetimes are assumed to
+            represent local time in Australia/Sydney.
+
+        Returns
+        -------
+        datetime
+            The same moment in time represented in UTC with timezone
+            information attached.
+        """
+        from datetime import timezone
+
+        if dt.tzinfo is None:
+            # Assume local zone
+            dt = dt.replace(tzinfo=self._get_user_zone())
+        return dt.astimezone(timezone.utc)
+
+    def to_utc_string(self, dt: "datetime", *, fmt: str = "%Y-%m-%dT%H:%M:%SZ") -> str:
+        """Convert a datetime to an ISO‑like string in UTC.
+
+        This is a convenience wrapper around :meth:`to_utc` that
+        formats the result as a string using ``datetime.strftime``.
+        The default format produces a string such as ``"2025-11-07T15:30:00Z"``.
+
+        Parameters
+        ----------
+        dt : datetime
+            The datetime to convert and format.
+        fmt : str, optional
+            A strftime format string.  Defaults to ISO 8601 without
+            fractional seconds and with a trailing ``Z`` to denote UTC.
+
+        Returns
+        -------
+        str
+            The formatted UTC timestamp.
+        """
+        dt_utc = self.to_utc(dt)
+        return dt_utc.strftime(fmt)
+
+    def from_utc(self, dt: "datetime" | str) -> "datetime":
+        """Convert a UTC datetime or ISO string to local time.
+
+        This function converts a timestamp in UTC to the client's local
+        time zone.  If a string is provided, it is parsed using
+        ``datetime.fromisoformat`` which accepts many ISO 8601
+        variants.  Strings that end with ``'Z'`` are treated as UTC.
+
+        Parameters
+        ----------
+        dt : datetime or str
+            A timezone‑aware datetime in UTC or an ISO 8601 string.
+
+        Returns
+        -------
+        datetime
+            A timezone‑aware datetime in the configured local time zone.
+        """
+        from datetime import datetime, timezone
+
+        if isinstance(dt, str):
+            # Replace trailing 'Z' with '+00:00' for ISO parsing
+            if dt.endswith("Z"):
+                iso_str = dt[:-1] + "+00:00"
+            else:
+                iso_str = dt
+            # Use fromisoformat which returns a naive datetime if no tz
+            parsed = datetime.fromisoformat(iso_str)
+        else:
+            parsed = dt
+        # Attach UTC tzinfo if naive
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        # Convert to local zone
+        return parsed.astimezone(self._get_user_zone())
+
+    def from_utc_string(self, s: str) -> "datetime":
+        """Parse an ISO string in UTC and convert it to local time.
+
+        This is a thin wrapper around :meth:`from_utc` that accepts
+        only a string and returns a timezone‑aware datetime in
+        Australia/Sydney.
+
+        Parameters
+        ----------
+        s : str
+            An ISO 8601 timestamp in UTC.  A trailing ``Z`` denotes UTC.
+
+        Returns
+        -------
+        datetime
+            A timezone‑aware datetime in the configured local time zone.
+        """
+        return self.from_utc(s)
+
+    def format_local(self, dt: "datetime", *, fmt: str = "%Y-%m-%d %H:%M:%S %Z") -> str:
+        """Format a datetime for display in the local time zone.
+
+        If the provided datetime is naive, it is assumed to be in
+        the client's configured local time zone.  Otherwise, it is
+        converted from its existing timezone.  The default format
+        produces strings such as ``"2025-11-07 02:30:00 AEDT"``.  You can supply a custom
+        strftime format string via ``fmt``.
+
+        Parameters
+        ----------
+        dt : datetime
+            The datetime to format.  Naive datetimes are assumed to
+            represent local time.
+        fmt : str, optional
+            A strftime format string.  Defaults to a human‑readable
+            local representation including the timezone abbreviation.
+
+        Returns
+        -------
+        str
+            The formatted local time string.
+        """
+        # Ensure dt is timezone aware in local zone
+        local_dt: "datetime"
+        if dt.tzinfo is None:
+            local_dt = dt.replace(tzinfo=self._get_user_zone())
+        else:
+            local_dt = dt.astimezone(self._get_user_zone())
+        return local_dt.strftime(fmt)
