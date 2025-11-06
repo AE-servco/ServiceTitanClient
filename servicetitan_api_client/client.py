@@ -265,8 +265,10 @@ class ServiceTitanClient:
         Returns
         -------
         Any
-            The parsed JSON content of the response if possible; otherwise the
-            raw text response is returned.
+            When the server indicates JSON content, this method returns
+            the parsed Python object.  For image or other binary
+            content it returns the raw byte sequence.  Otherwise it
+            returns the decoded text response.
 
         Raises
         ------
@@ -313,11 +315,22 @@ class ServiceTitanClient:
                 f"{response.status_code} Error for {url}: {err_text}"
             )
 
-        # Try to parse JSON, fall back to text
-        try:
-            return response.json()
-        except ValueError:
-            return response.text
+        # Try to parse JSON when the response advertises JSON content.  If
+        # JSON decoding fails or the content type indicates something
+        # else (e.g. an image), choose an appropriate representation.
+        content_type = response.headers.get("Content-Type", "").lower()
+        # If the server says it's JSON, attempt to decode
+        if content_type.startswith("application/json"):
+            try:
+                return response.json()
+            except ValueError:
+                # Fall back to text if JSON parsing fails
+                return response.text
+        # If it's an image or other binary data, return bytes
+        if content_type.startswith("image/") or content_type.startswith("application/octet-stream"):
+            return response.content
+        # Otherwise return the decoded text
+        return response.text
 
     # ------------------------------------------------------------------
     # Public convenience methods
