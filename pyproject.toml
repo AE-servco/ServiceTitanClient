@@ -27,9 +27,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
-[tool.setuptools]
-packages = ["servicetitan_api_client"]
-
 [tool.setuptools.packages.find]
 # Include the package directory and any subpackages
+where = ["."]
 include = ["servicetitan_api_client*"]
