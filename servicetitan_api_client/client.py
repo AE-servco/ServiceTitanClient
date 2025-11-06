@@ -106,6 +106,7 @@ class ServiceTitanClient:
         environment: str = "integration",
         auth_url: Optional[str] = None,
         base_url: Optional[str] = None,
+        local_timezone: str = "Australia/Sydney",
     ) -> None:
         if not client_id:
             raise ValueError("client_id must be provided")
@@ -128,6 +129,12 @@ class ServiceTitanClient:
         self.environment = environment
         self.auth_url = auth_url or self._DEFAULT_AUTH_URLS[environment]
         self.base_url = base_url or self._DEFAULT_BASE_URLS[environment]
+
+        # Configure the local timezone for date conversions.  This
+        # string will be resolved via ZoneInfo when needed by
+        # `_get_user_zone`.  Changing this value after initialisation
+        # will affect future calls to the date helper methods.
+        self.local_timezone = local_timezone
 
         # Internal token cache
         self._access_token: Optional[str] = None
