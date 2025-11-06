@@ -13,7 +13,7 @@ version = "0.1.0"
 description = "Python client for interacting with the ServiceTitan REST API"
 requires-python = ">=3.8"
 authors = [
-    { name = "AE Servco", email = "" },
+    { name = "AE Servco", email = "albie.ewins@tradesaus.com.au" },
 ]
 license = { text = "MIT" }
 # The key runtime dependency needed to make HTTP requests.
