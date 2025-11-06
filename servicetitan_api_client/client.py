@@ -367,7 +367,7 @@ class ServiceTitanClient:
         headers: Optional[Dict[str, str]] = None,
         timeout: Optional[float] = None,
     ) -> Any:
-        """Perform a POST request.
+        """Perform a PATCH request.
 
         See :meth:`_request` for full parameter documentation.
         """
