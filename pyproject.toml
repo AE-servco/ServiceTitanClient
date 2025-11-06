@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+# The name under which this package will be published.  Users can
+# install it via `pip install servicetitan_api_client` once
+# released to a package repository.
+name = "servicetitan_api_client"
+# Increment this version as you make backward‑incompatible or
+# backwards‑compatible changes.  Semantic versioning is recommended.
+version = "0.1.0"
+description = "Python client for interacting with the ServiceTitan REST API"
+requires-python = ">=3.8"
+authors = [
+    { name = "AE Servco", email = "" },
+]
+license = { text = "MIT" }
+# The key runtime dependency needed to make HTTP requests.
+dependencies = [
+    "requests>=2.25",
+]
+keywords = ["servicetitan", "api", "client", "oauth2"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[tool.setuptools.packages.find]
+# Include the package directory and any subpackages
+include = ["servicetitan_api_client*"]
