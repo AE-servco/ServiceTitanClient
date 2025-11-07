@@ -44,6 +44,8 @@ from typing import Any, Dict, Optional
 
 import requests
 
+from datetime import date as _date, time as _time, datetime as _datetime
+
 from .exceptions import ServiceTitanAuthError, ServiceTitanAPIError
 
 
@@ -686,3 +688,47 @@ class ServiceTitanClient:
         else:
             local_dt = dt.astimezone(self._get_user_zone())
         return local_dt.strftime(fmt)
+    
+    def local_start_of_day(self, d: _date) -> _datetime:
+        """
+        Return a timezone‑aware datetime representing midnight on date `d`
+        in the client’s local time zone.
+        """
+        tz = self._get_user_zone()
+        return _datetime.combine(d, _time.min, tzinfo=tz)
+
+    def local_end_of_day(self, d: _date) -> _datetime:
+        """
+        Return a timezone‑aware datetime representing 23:59:59 on date `d`
+        in the client’s local time zone.
+        """
+        tz = self._get_user_zone()
+        return _datetime.combine(d, _time(23, 59, 59), tzinfo=tz)
+
+    def start_of_day_utc(self, d: _date) -> _datetime:
+        """
+        Convert midnight of date `d` in the local timezone to a UTC datetime.
+        """
+        return self.to_utc(self.local_start_of_day(d))
+
+    def end_of_day_utc(self, d: _date) -> _datetime:
+        """
+        Convert 23:59:59 of date `d` in the local timezone to a UTC datetime.
+        """
+        return self.to_utc(self.local_end_of_day(d))
+
+    def start_of_day_utc_string(self, d: _date) -> str:
+        """
+        Convert midnight of date `d` in the local timezone to an ISO 8601
+        UTC string (ending in 'Z').
+        """
+        dt = self.start_of_day_utc(d)
+        return dt.isoformat().replace("+00:00", "Z")
+
+    def end_of_day_utc_string(self, d: _date) -> str:
+        """
+        Convert 23:59:59 of date `d` in the local timezone to an ISO 8601
+        UTC string (ending in 'Z').
+        """
+        dt = self.end_of_day_utc(d)
+        return dt.isoformat().replace("+00:00", "Z")
