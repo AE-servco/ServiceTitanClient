@@ -350,6 +350,36 @@ class ServiceTitanClient:
         See :meth:`_request` for full parameter documentation.
         """
         return self._request("GET", path, params=params, headers=headers, timeout=timeout)
+    
+    def get_all(
+        self,
+        path: str,
+        *,
+        params: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
+        timeout: Optional[float] = None,
+    ) -> Any:
+        """Performs GET requests until no more pages
+        """
+        output = []
+        page = 1
+        if params:
+            params['page'] = page
+        else:
+            params = {'page': page}
+
+        while True:
+            params['page'] = page
+            resp = self.get(path, params=params, headers=headers, timeout=timeout)
+            
+            data = resp.get("data") or []
+            output.extend(data)
+            has_more = resp.get("hasMore")
+            if has_more:
+                page += 1
+                continue
+            break
+        return output
 
     def post(
         self,
