@@ -370,8 +370,12 @@ class ServiceTitanClient:
 
         while True:
             params['page'] = page
-            resp = self.get(path, params=params, headers=headers, timeout=timeout)
-            
+            try:
+                resp = self.get(path, params=params, headers=headers, timeout=timeout)
+            except Exception:
+                break        
+            if not isinstance(resp, dict):
+                break
             data = resp.get("data") or []
             output.extend(data)
             has_more = resp.get("hasMore")
@@ -380,6 +384,40 @@ class ServiceTitanClient:
                 continue
             break
         return output
+    
+    def get_all_id_filter(
+        self,
+        path: str,
+        ids: list,
+        *,
+        params: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
+        timeout: Optional[float] = None,
+    ) -> Any:
+        if not params:
+            params = {}
+        id_len = len(ids)
+        if id_len < 50:
+            params['ids'] = ','.join(ids)
+            resp = self.get(path, params=params, headers=headers, timeout=timeout)
+            data = resp.get("data") or []
+            return data
+        elif id_len % 50 == 0:
+            data = []
+            for i in range(id_len // 50):
+                tmp_ids = ids[50*i:50*(i+1)]
+                params['ids'] = ','.join(tmp_ids)
+                resp = self.get(path, params=params, headers=headers, timeout=timeout)
+                data.extend(resp.get("data"))
+            return data
+        else:
+            data = []
+            for i in range((id_len // 50) + 1):
+                tmp_ids = ids[50*i:50*(i+1)]
+                params['ids'] = ','.join(tmp_ids)
+                resp = self.get(path, params=params, headers=headers, timeout=timeout)
+                data.extend(resp.get("data"))
+            return data
 
     def post(
         self,
