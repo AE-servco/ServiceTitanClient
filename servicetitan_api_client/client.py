@@ -390,6 +390,7 @@ class ServiceTitanClient:
         path: str,
         ids: list,
         *,
+        id_filter_name: str = 'ids',
         params: Optional[Dict[str, Any]] = None,
         headers: Optional[Dict[str, str]] = None,
         timeout: Optional[float] = None,
@@ -398,7 +399,7 @@ class ServiceTitanClient:
             params = {}
         id_len = len(ids)
         if id_len < 50:
-            params['ids'] = ','.join(ids)
+            params[id_filter_name] = ','.join(ids)
             resp = self.get(path, params=params, headers=headers, timeout=timeout)
             data = resp.get("data") or []
             return data
