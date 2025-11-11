@@ -758,6 +758,9 @@ class ServiceTitanClient:
             local_dt = dt.astimezone(self._get_user_zone())
         return local_dt.strftime(fmt)
     
+    def st_date_to_local(self, st_date_str: str, *, fmt: str = "%Y-%m-%d %H:%M:%S %Z") -> str:
+        return self.format_local(self.from_utc_string(st_date_str), fmt=fmt)
+
     def local_start_of_day(self, d: _date) -> _datetime:
         """
         Return a timezone‑aware datetime representing midnight on date `d`
