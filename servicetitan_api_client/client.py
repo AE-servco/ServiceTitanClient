@@ -104,6 +104,7 @@ class ServiceTitanClient:
         client_id: str,
         client_secret: str,
         app_key: str,
+        app_guid: Optional[str] = None,
         tenant: Optional[str] = None,
         environment: str = "integration",
         auth_url: Optional[str] = None,
@@ -127,6 +128,7 @@ class ServiceTitanClient:
         self.client_id = client_id
         self.client_secret = client_secret
         self.app_key = app_key
+        self.app_guid = app_guid
         self.tenant = tenant
         self.environment = environment
         self.auth_url = auth_url or self._DEFAULT_AUTH_URLS[environment]
