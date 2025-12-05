@@ -402,6 +402,7 @@ class ServiceTitanClient:
         id_len = len(ids)
         if id_len < 50:
             params[id_filter_name] = ','.join(ids)
+            # print(params)
             resp = self.get(path, params=params, headers=headers, timeout=timeout)
             data = resp.get("data") or []
             return data
@@ -409,7 +410,8 @@ class ServiceTitanClient:
             data = []
             for i in range(id_len // 50):
                 tmp_ids = ids[50*i:50*(i+1)]
-                params['ids'] = ','.join(tmp_ids)
+                params[id_filter_name] = ','.join(tmp_ids)
+                # print(params)
                 resp = self.get(path, params=params, headers=headers, timeout=timeout)
                 data.extend(resp.get("data"))
             return data
@@ -417,8 +419,9 @@ class ServiceTitanClient:
             data = []
             for i in range((id_len // 50) + 1):
                 tmp_ids = ids[50*i:50*(i+1)]
-                params['ids'] = ','.join(tmp_ids)
+                params[id_filter_name] = ','.join(tmp_ids)
                 resp = self.get(path, params=params, headers=headers, timeout=timeout)
+                # print(params)
                 data.extend(resp.get("data"))
             return data
 
