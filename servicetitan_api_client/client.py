@@ -397,34 +397,18 @@ class ServiceTitanClient:
         headers: Optional[Dict[str, str]] = None,
         timeout: Optional[float] = None,
     ) -> Any:
-        if not params:
-            params = {}
+        
+        base_params = params or {}
+        
         id_len = len(ids)
-        if id_len < 50:
-            params[id_filter_name] = ','.join(ids)
-            # print(params)
-            resp = self.get(path, params=params, headers=headers, timeout=timeout)
-            data = resp.get("data") or []
-            return data
-        elif id_len % 50 == 0:
-            data = []
-            for i in range(id_len // 50):
-                tmp_ids = ids[50*i:50*(i+1)]
-                params[id_filter_name] = ','.join(tmp_ids)
-                # print(params)
-                resp = self.get(path, params=params, headers=headers, timeout=timeout)
-                data.extend(resp.get("data"))
-            return data
-        else:
-            data = []
-            for i in range((id_len // 50) + 1):
-                tmp_ids = ids[50*i:50*(i+1)]
-                params[id_filter_name] = ','.join(tmp_ids)
-                resp = self.get(path, params=params, headers=headers, timeout=timeout)
-                # print(params)
-                data.extend(resp.get("data"))
-            return data
-
+        data = []
+        for i in range(0, id_len, 50):
+            tmp_ids = ids[i:i+50]
+            request_params = base_params.copy()
+            request_params[id_filter_name] = ','.join(tmp_ids)
+            data.extend(self.get_all(path, params=request_params, headers=headers, timeout=timeout))
+        return data
+    
     def post(
         self,
         path: str,
