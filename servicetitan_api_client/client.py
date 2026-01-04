@@ -390,7 +390,7 @@ class ServiceTitanClient:
     def get_all_id_filter(
         self,
         path: str,
-        ids: list,
+        ids: list[str],
         *,
         id_filter_name: str = 'ids',
         params: Optional[Dict[str, Any]] = None,
