@@ -307,7 +307,7 @@ class ServiceTitanClient:
         except Exception as exc:
             raise ServiceTitanAPIError(f"Failed to connect to {url}: {exc}") from exc
 
-        print(f"API response from _request in ServiceTitanClient: {response}")
+        print(f"API response.text from _request in ServiceTitanClient: {response.text}")
 
         if response.status_code >= 400:
             # Attempt to return JSON error details
